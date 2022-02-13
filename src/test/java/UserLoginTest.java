@@ -15,6 +15,7 @@ public class UserLoginTest {
     private User user;
     private UserClient userClient;
     private String accessToken;
+    private String bearerToken;
 
 
     @Before
@@ -23,9 +24,10 @@ public class UserLoginTest {
         user = User.getRandom();
     }
 
-//    @After
-//    public void  tearDown() {
-//    }
+    @After //Удаляем созданого пользователя
+    public void tearDown() {
+        UserClient.delete(bearerToken);
+    }
 
     @Test
     @DisplayName("логин под существующим пользователем")
@@ -37,9 +39,10 @@ public class UserLoginTest {
         ValidatableResponse response = userClient.login(UserCredentials.from(user));
         //без паттерна "фабичный метод":  ValidatableResponse response = userClient.login(new UserCredentials(user.email, user.password));
         accessToken = response.extract().path("accessToken");
+        bearerToken = accessToken.substring(7);
         int statusCodeSuccessfulLogin = response.extract().statusCode();
         //Assert
-        assertThat("User access token is incorrect", accessToken, is(not("")));
+        assertThat("User access token is incorrect", bearerToken, is(not("")));
         assertThat(statusCodeSuccessfulLogin, equalTo(200));
     }
 }

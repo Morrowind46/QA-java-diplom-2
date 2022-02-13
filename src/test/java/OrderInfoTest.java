@@ -1,5 +1,6 @@
 import io.qameta.allure.Description;
 import io.restassured.response.ValidatableResponse;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import java.util.List;
@@ -16,7 +17,8 @@ public class OrderInfoTest {
     private UserClient userClient;
     private Ingredients ingredients;
     public OrderClient orderClient;
-    String bearerToken;
+    private String accessToken;
+    private String bearerToken;
 
     // Создание рандомного пользователя и бургера
     @Before
@@ -27,10 +29,15 @@ public class OrderInfoTest {
         orderClient = new OrderClient();
     }
 
+    @After //Удаляем созданого пользователя
+    public void tearDown() {
+        UserClient.delete(bearerToken);
+    }
+
     @Test
     @Description("Получение списка заказов")
     public void orderInfoCanBeGet (){
-
+        bearerToken = "";
         // Запрос информации о заказах
         ValidatableResponse orderInfo = orderClient.orderInfo();
         // Получение статус кода запроса информации о заказах
@@ -43,7 +50,7 @@ public class OrderInfoTest {
         // Проверка что статус код соответсвует ожиданиям
         assertThat ("Status code is not correct", statusCode, equalTo(200));
         // Проверка что информация о заказах получена
-        assertTrue("Information about orders has not been received", orderInfoGet);
+        assertThat("Information about orders has not been received", orderInfoGet, is(true));
         // Проверка что список заказов не пустой
         assertThat("Orders list empty", ordersList, is(not(0)));
     }
@@ -57,7 +64,8 @@ public class OrderInfoTest {
         // Авторизация созданого пользователя
         ValidatableResponse login = userClient.login(UserCredentials.from(user));
         // Получение токена пользователя
-        bearerToken = login.extract().path("accessToken");
+        accessToken = login.extract().path("accessToken");
+        bearerToken = accessToken.substring(7);
         // Информация о заказах пользователя
         ValidatableResponse orderInfo = orderClient.userOrderInfo(bearerToken);
         // Получение статус кода запроса информации о заказах клиента
@@ -70,7 +78,7 @@ public class OrderInfoTest {
         // Проверка что статус код соответствует ожиданиям
         assertThat ("Status code is not correct", statusCode, equalTo(200));
         // Проверка что информация о заказах получена
-        assertTrue("Information about orders has not been received", orderCreated);
+        assertThat("Information about orders has not been received", orderCreated, is(true));
         // Проверка что список заказов не пустой
         assertThat("Orders list empty", ordersList, is(not(0)));
     }
@@ -92,7 +100,7 @@ public class OrderInfoTest {
         // Проверка что статус код соответсвует ожиданиям
         assertThat ("Status code is incorrect", statusCode, equalTo(401));
         // Проверка что информация о заказах не получена
-        assertFalse("Information about orders has been received", orderInfoNotGet);
+        assertThat("Information about orders has not been received", orderInfoNotGet, is(false));
         // Проверка что сообщение об ошибке соответствует ожиданиям
         assertEquals("The error message is not correct", "You should be authorised", errorMessage);
     }

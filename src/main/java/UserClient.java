@@ -37,5 +37,13 @@ public class UserClient extends UserSpecification {
                 .patch(USER_PATH + "user")
                 .then();
     }
-
+    @Step ("Удаление пользователя")
+    public static ValidatableResponse delete(String bearerToken) {
+        return given()
+                .spec(getBaseSpec())
+                .auth().oauth2(bearerToken)
+                .when()
+                .delete(USER_PATH + "user")
+                .then();
+    }
 }

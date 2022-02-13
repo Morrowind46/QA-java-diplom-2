@@ -17,6 +17,8 @@ public class UserLoginValidationTest {
     private final UserCredentials userCredentials;
     private final int expectedStatus;
     private final String expectedErrorMessage;
+    private String accessToken;
+    private String bearerToken;
 
     public UserLoginValidationTest(UserCredentials userCredentials, int expectedStatus, String expectedErrorMessage) {
         this.userCredentials = userCredentials;
@@ -34,9 +36,10 @@ public class UserLoginValidationTest {
         };
     }
 
-//    @After
-//    public void  tearDown() {
-//    }
+    @After //Удаляем созданого пользователя
+    public void tearDown() {
+        UserClient.delete(bearerToken);
+    }
 
     @Test
     @DisplayName("Для авторизации нужно передать все обязательные поля")
@@ -44,16 +47,18 @@ public class UserLoginValidationTest {
             "2. если нет поля Password, запрос возвращает ошибку" +
             "3. система вернёт ошибку, если неправильно указать Email" +
             "4. система вернёт ошибку, если неправильно указать Password" )
-    public void CourierLoginValidationTest () {
+    public void UserLoginValidationTest() {
 
         //Arrange
-        userClient.create(user);
+        ValidatableResponse response = userClient.create(user);
         ValidatableResponse login = new UserClient().login(userCredentials);
+        accessToken = response.extract().path("accessToken");
+        bearerToken = accessToken.substring(7);
         //Act
         int ActualStatusCode = login.extract ().statusCode();
+        String actualMessage = login.extract ().path ("message");
         //Assert
         assertEquals ("Status code is incorrect",expectedStatus, ActualStatusCode);
-        String actualMessage = login.extract ().path ("message");
         assertEquals ("User access token is incorrect", expectedErrorMessage, actualMessage);
     }
 }
